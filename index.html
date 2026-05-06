@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop_Digitalfilm</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <div class="logo">K</div>
+      <h2>Shop_Digitalfilm</h2>
+    </div>
+    <div class="lang">ES</div>
+  </div>
+
+  <div id="home" class="page active">
+    <div class="profile">
+      <div class="avatar" id="avatar">U</div>
+      <div>
+        <h2 id="username">Usuario</h2>
+        <p id="userid">Telegram ID: ---</p>
+        <p>Balance: <b id="smallBalance">0.00 USDT</b></p>
+      </div>
+    </div>
+
+    <div class="title">Producto destacado</div>
+    <div class="grid" id="productsGrid"></div>
+  </div>
+
+  <div id="detail" class="page">
+    <button onclick="goHome()" class="back-btn">← Volver</button>
+    <div id="detailContent"></div>
+  </div>
+
+  <div id="orders" class="page">
+    <div class="title">Mis órdenes</div>
+    <div id="ordersList" class="empty">No tienes órdenes todavía.</div>
+  </div>
+
+  <div id="wallet" class="page">
+    <div class="title">Mi Wallet</div>
+    <div class="wallet-card">
+      <p>Balance disponible</p>
+      <div class="balance">$<span id="balance">0.00</span></div>
+      <button onclick="topup()">+ Recargar wallet</button>
+    </div>
+    <div class="title">Transacciones</div>
+    <div id="transactionsList" class="empty">Sin transacciones.</div>
+  </div>
+
+  <div id="support" class="page">
+    <div class="title">Soporte</div>
+    <div class="box">
+      <h3>¿Necesitas ayuda?</h3>
+      <p>Escríbenos para soporte o preguntas sobre tus compras.</p>
+      <button class="main-btn" onclick="openSupport()">Contactar soporte</button>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="showPage('home', this)"><div class="nav-icon">⌂</div>Home</div>
+    <div class="nav-item" onclick="showPage('home', this)"><div class="nav-icon">▦</div>Productos</div>
+    <div class="nav-item" onclick="showPage('orders', this)"><div class="nav-icon">▤</div>Órdenes</div>
+    <div class="nav-item" onclick="showPage('wallet', this)"><div class="nav-icon">▣</div>Wallet</div>
+    <div class="nav-item" onclick="showPage('support', this)"><div class="nav-icon">☏</div>Soporte</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
