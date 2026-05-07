@@ -54,37 +54,36 @@ app.post("/user", async (req, res) => {
   try {
     const { telegram_id } = req.body;
 
-    let { data: user, error } = await supabase
+    let { data: user } = await supabase
       .from("users")
       .select("*")
-      .eq("telegram_id", telegram_id)
+      .eq("id", telegram_id)
       .single();
 
     if (!user) {
-      const { data: newUser, error: insertError } = await supabase
+      const { data: newUser, error } = await supabase
         .from("users")
         .insert([
           {
-            telegram_id,
+            id: telegram_id,
             balance: 0
           }
         ])
         .select()
         .single();
 
-      if (insertError) throw insertError;
-
+      if (error) throw error;
       user = newUser;
     }
 
-    res.json(user);
+    res.json({
+      balance: Number(user.balance || 0),
+      orders: []
+    });
 
   } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      error: "Error cargando usuario"
-    });
+    console.log("Error /user:", error);
+    res.status(500).json({ error: "Error cargando usuario" });
   }
 });
 
@@ -95,33 +94,33 @@ app.post("/topup", async (req, res) => {
     let { data: user } = await supabase
       .from("users")
       .select("*")
-      .eq("telegram_id", telegram_id)
+      .eq("id", telegram_id)
       .single();
 
     if (!user) {
-      const { data: newUser } = await supabase
+      const { data: newUser, error } = await supabase
         .from("users")
         .insert([
           {
-            telegram_id,
+            id: telegram_id,
             balance: 0
           }
         ])
         .select()
         .single();
 
+      if (error) throw error;
       user = newUser;
     }
 
-    const newBalance =
-      Number(user.balance) + Number(amount);
+    const newBalance = Number(user.balance || 0) + Number(amount || 0);
 
-    await supabase
+    const { error: updateError } = await supabase
       .from("users")
-      .update({
-        balance: newBalance
-      })
-      .eq("telegram_id", telegram_id);
+      .update({ balance: newBalance })
+      .eq("id", telegram_id);
+
+    if (updateError) throw updateError;
 
     res.json({
       success: true,
@@ -129,10 +128,10 @@ app.post("/topup", async (req, res) => {
     });
 
   } catch (error) {
-    console.log(error);
-
+    console.log("Error /topup:", error);
     res.status(500).json({
-      error: "Error agregando saldo"
+      success: false,
+      message: "Error agregando saldo"
     });
   }
 });
