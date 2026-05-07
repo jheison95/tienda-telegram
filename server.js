@@ -50,35 +50,91 @@ app.get("/offers/:productId", async (req, res) => {
   }
 });
 
-app.post("/user", (req, res) => {
-  const { telegram_id } = req.body;
+app.post("/user", async (req, res) => {
+  try {
+    const { telegram_id } = req.body;
 
-  if (!users[telegram_id]) {
-    users[telegram_id] = {
-      balance: 0,
-      orders: []
-    };
+    let { data: user, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("telegram_id", telegram_id)
+      .single();
+
+    if (!user) {
+      const { data: newUser, error: insertError } = await supabase
+        .from("users")
+        .insert([
+          {
+            telegram_id,
+            balance: 0
+          }
+        ])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      user = newUser;
+    }
+
+    res.json(user);
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      error: "Error cargando usuario"
+    });
   }
-
-  res.json(users[telegram_id]);
 });
 
-app.post("/topup", (req, res) => {
-  const { telegram_id, amount } = req.body;
+app.post("/topup", async (req, res) => {
+  try {
+    const { telegram_id, amount } = req.body;
 
-  if (!users[telegram_id]) {
-    users[telegram_id] = {
-      balance: 0,
-      orders: []
-    };
+    let { data: user } = await supabase
+      .from("users")
+      .select("*")
+      .eq("telegram_id", telegram_id)
+      .single();
+
+    if (!user) {
+      const { data: newUser } = await supabase
+        .from("users")
+        .insert([
+          {
+            telegram_id,
+            balance: 0
+          }
+        ])
+        .select()
+        .single();
+
+      user = newUser;
+    }
+
+    const newBalance =
+      Number(user.balance) + Number(amount);
+
+    await supabase
+      .from("users")
+      .update({
+        balance: newBalance
+      })
+      .eq("telegram_id", telegram_id);
+
+    res.json({
+      success: true,
+      balance: newBalance
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      error: "Error agregando saldo"
+    });
   }
-
-  users[telegram_id].balance += Number(amount);
-
-  res.json({
-    success: true,
-    balance: users[telegram_id].balance
-  });
 });
 
 app.post("/buy-offer", async (req, res) => {
