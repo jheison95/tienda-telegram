@@ -139,18 +139,10 @@ app.post("/topup", async (req, res) => {
 app.post("/buy-offer", async (req, res) => {
   const { telegram_id, offer } = req.body;
 
-  if (!users[telegram_id]) {
-    users[telegram_id] = {
-      balance: 0,
-      orders: []
-    };
-  }
-
   if (purchaseLocks[telegram_id]) {
     return res.json({
       success: false,
-      message: "Compra en proceso, espera un momento",
-      balance: users[telegram_id].balance
+      message: "Compra en proceso, espera un momento"
     });
   }
 
@@ -161,13 +153,37 @@ app.post("/buy-offer", async (req, res) => {
     const price = Number(offer.precio_venta || offer.price || 0);
     const total = price * quantity;
 
+    let { data: user, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", telegram_id)
+      .single();
+
+    if (!user) {
+      const { data: newUser, error } = await supabase
+        .from("users")
+        .insert([
+          {
+            id: telegram_id,
+            balance: 0
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      user = newUser;
+    }
+
+    const currentBalance = Number(user.balance || 0);
+
     if (quantity < 1) {
       purchaseLocks[telegram_id] = false;
 
       return res.json({
         success: false,
         message: "Cantidad inválida",
-        balance: users[telegram_id].balance
+        balance: currentBalance
       });
     }
 
@@ -177,21 +193,30 @@ app.post("/buy-offer", async (req, res) => {
       return res.json({
         success: false,
         message: "No hay stock suficiente",
-        balance: users[telegram_id].balance
+        balance: currentBalance
       });
     }
 
-    if (users[telegram_id].balance < total) {
+    if (currentBalance < total) {
       purchaseLocks[telegram_id] = false;
 
       return res.json({
         success: false,
         message: "Saldo insuficiente",
-        balance: users[telegram_id].balance
+        balance: currentBalance
       });
     }
 
-    users[telegram_id].balance -= total;
+    const newBalance = currentBalance - total;
+
+    const { error: balanceError } = await supabase
+      .from("users")
+      .update({
+        balance: newBalance
+      })
+      .eq("id", telegram_id);
+
+    if (balanceError) throw balanceError;
 
     await fetch(SHEET_URL, {
       method: "POST",
@@ -206,8 +231,28 @@ app.post("/buy-offer", async (req, res) => {
       })
     });
 
+    const { data: savedOrder, error: orderError } = await supabase
+      .from("orders")
+      .insert([
+        {
+          telegram_id,
+          product_id: offer.producto_id,
+          vendedor: offer.vendedor,
+          nivel: offer.nivel,
+          quantity,
+          price,
+          total,
+          status: "pending_supplier",
+          message: "Pedido recibido. Estamos procesando tu acceso."
+        }
+      ])
+      .select()
+      .single();
+
+    if (orderError) throw orderError;
+
     const order = {
-      id: Date.now(),
+      id: savedOrder.id,
       product: offer.product_name || "Producto digital",
       product_name: offer.product_name || "Producto digital",
       product_id: offer.producto_id,
@@ -219,16 +264,14 @@ app.post("/buy-offer", async (req, res) => {
       total,
       status: "pending_supplier",
       message: "Pedido recibido. Estamos procesando tu acceso.",
-      date: new Date().toLocaleString()
+      date: new Date(savedOrder.created_at).toLocaleString()
     };
-
-    users[telegram_id].orders.unshift(order);
 
     purchaseLocks[telegram_id] = false;
 
     res.json({
       success: true,
-      balance: users[telegram_id].balance,
+      balance: newBalance,
       order
     });
 
@@ -239,12 +282,10 @@ app.post("/buy-offer", async (req, res) => {
 
     res.json({
       success: false,
-      message: "Error procesando compra",
-      balance: users[telegram_id].balance
+      message: "Error procesando compra"
     });
   }
 });
-
 app.post("/orders", (req, res) => {
   const { telegram_id } = req.body;
 
