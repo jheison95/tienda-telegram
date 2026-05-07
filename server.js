@@ -76,9 +76,31 @@ app.post("/user", async (req, res) => {
       user = newUser;
     }
 
+    const { data: ordersData, error: ordersError } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("telegram_id", telegram_id)
+      .order("created_at", { ascending: false });
+
+    if (ordersError) throw ordersError;
+
+    const orders = (ordersData || []).map(o => ({
+      id: o.id,
+      product: o.product_id || "Producto digital",
+      product_id: o.product_id,
+      vendedor: o.vendedor,
+      nivel: o.nivel,
+      quantity: o.quantity,
+      price: o.price,
+      total: o.total,
+      status: o.status,
+      message: o.message,
+      date: new Date(o.created_at).toLocaleString()
+    }));
+
     res.json({
       balance: Number(user.balance || 0),
-      orders: []
+      orders
     });
 
   } catch (error) {
@@ -86,7 +108,6 @@ app.post("/user", async (req, res) => {
     res.status(500).json({ error: "Error cargando usuario" });
   }
 });
-
 app.post("/topup", async (req, res) => {
   try {
     const { telegram_id, amount } = req.body;
