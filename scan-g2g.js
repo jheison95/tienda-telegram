@@ -324,10 +324,25 @@ async function run() {
 
   const browser = await chromium.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-blink-features=AutomationControlled"
+    ]
   });
 
   const page = await browser.newPage();
+
+  await page.setExtraHTTPHeaders({
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+  });
+
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "webdriver", {
+      get: () => false
+    });
+  });
 
   for (const product of products) {
 
@@ -341,11 +356,11 @@ async function run() {
     try {
 
       await page.goto(URL, {
-        waitUntil: "domcontentloaded",
+        waitUntil: "networkidle",
         timeout: 60000
       });
 
-      await page.waitForTimeout(12000);
+      await page.waitForTimeout(15000);
 
       const text = await page.locator("body").innerText();
 
@@ -446,7 +461,7 @@ async function run() {
         try {
 
           await page.goto(URL, {
-            waitUntil: "domcontentloaded",
+            waitUntil: "networkidle",
             timeout: 60000
           });
 
@@ -509,7 +524,6 @@ async function run() {
 
   await browser.close();
 }
-
 async function startScanner() {
   console.log("SCANNER G2G 24/7 INICIADO");
 
