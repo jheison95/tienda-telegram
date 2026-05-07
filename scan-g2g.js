@@ -2,7 +2,7 @@ const { chromium } = require("playwright");
 const fs = require("fs");
 const axios = require("axios");
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwJs8UWS6_kJVhEgb3CMuyE5AeBSXANM2L57PlcG9HUV718pPn5ag_ysXNV8Tm1GKrE7g/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzgNYvZ_szZiV171cMb9n1_t2SncdjG6XofRasB27DgZr5V0pPcFT5uhvW9CZ9-u06H5w/exec";
 
 
 const MAX_OFERTAS = 5;
@@ -323,26 +323,11 @@ async function run() {
   console.log("Productos encontrados:", products.length);
 
   const browser = await chromium.launch({
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-blink-features=AutomationControlled"
-    ]
+    headless: false,
+    slowMo: 150
   });
 
   const page = await browser.newPage();
-
-  await page.setExtraHTTPHeaders({
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
-  });
-
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator, "webdriver", {
-      get: () => false
-    });
-  });
 
   for (const product of products) {
 
@@ -356,11 +341,11 @@ async function run() {
     try {
 
       await page.goto(URL, {
-        waitUntil: "networkidle",
+        waitUntil: "domcontentloaded",
         timeout: 60000
       });
 
-      await page.waitForTimeout(15000);
+      await page.waitForTimeout(12000);
 
       const text = await page.locator("body").innerText();
 
@@ -461,7 +446,7 @@ async function run() {
         try {
 
           await page.goto(URL, {
-            waitUntil: "networkidle",
+            waitUntil: "domcontentloaded",
             timeout: 60000
           });
 
@@ -524,6 +509,7 @@ async function run() {
 
   await browser.close();
 }
+
 async function startScanner() {
   console.log("SCANNER G2G 24/7 INICIADO");
 

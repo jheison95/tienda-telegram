@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbwJs8UWS6_kJVhEgb3CMuyE5AeBSXANM2L57PlcG9HUV718pPn5ag_ysXNV8Tm1GKrE7g/exec";
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzgNYvZ_szZiV171cMb9n1_t2SncdjG6XofRasB27DgZr5V0pPcFT5uhvW9CZ9-u06H5w/exec";
 
 let users = {};
 let purchaseLocks = {};

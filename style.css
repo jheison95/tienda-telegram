@@ -102,12 +102,6 @@ button{border:0;border-radius:16px;padding:12px;background:linear-gradient(135de
   color:#4f46e5;
   font-weight:700;
 }
-.feedbacks-scroll{
-  max-height:170px;
-  overflow:auto;
-  margin-top:10px;
-  padding-right:4px;
-}
 
 .feedback-item{
   background:#fff;
