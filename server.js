@@ -147,16 +147,17 @@ app.post("/topup", async (req, res) => {
 
     if (updateError) throw updateError;
 
-    await supabase
+    const { error: transactionError } = await supabase
       .from("transactions")
       .insert([
         {
           telegram_id,
-          type: "Top up",
-          amount: Number(amount),
-          description: "Recarga wallet"
+          type: "topup",
+          amount
         }
       ]);
+
+    if (transactionError) throw transactionError;
 
     res.json({
       success: true,
