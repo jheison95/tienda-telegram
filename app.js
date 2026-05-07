@@ -116,16 +116,29 @@ function formatFecha(fecha) {
 async function loadUser() {
   const res = await fetch("/user", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ telegram_id })
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      telegram_id
+    })
   });
 
   const data = await res.json();
 
   balance = Number(data.balance || 0);
   orders = data.orders || [];
+  transactions = data.transactions || [];
 
   updateBalance();
+
+  if (typeof renderOrders === "function") {
+    renderOrders();
+  }
+
+  if (typeof renderTransactions === "function") {
+    renderTransactions();
+  }
 }
 
 async function loadProducts() {
