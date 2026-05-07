@@ -323,8 +323,8 @@ async function run() {
   console.log("Productos encontrados:", products.length);
 
   const browser = await chromium.launch({
-    headless: false,
-    slowMo: 150
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
 
   const page = await browser.newPage();
