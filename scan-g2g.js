@@ -510,4 +510,26 @@ async function run() {
   await browser.close();
 }
 
-run();
+async function startScanner() {
+  console.log("SCANNER G2G 24/7 INICIADO");
+
+  while (true) {
+    try {
+      console.log("NUEVO ESCANEO:", new Date().toLocaleString());
+
+      await run();
+
+      console.log("ESCANEO COMPLETO. Reiniciando en 30 segundos...");
+
+      await new Promise(resolve => setTimeout(resolve, 30 * 1000));
+
+    } catch (error) {
+      console.log("ERROR EN SCANNER:", error);
+      console.log("Reintentando en 60 segundos...");
+
+      await new Promise(resolve => setTimeout(resolve, 60 * 1000));
+    }
+  }
+}
+
+startScanner();
