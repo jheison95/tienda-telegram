@@ -73,6 +73,7 @@ app.post("/user", async (req, res) => {
         .single();
 
       if (error) throw error;
+
       user = newUser;
     }
 
@@ -98,14 +99,32 @@ app.post("/user", async (req, res) => {
       date: new Date(o.created_at).toLocaleString()
     }));
 
+    const { data: transactionsData, error: transactionsError } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("telegram_id", telegram_id)
+      .order("created_at", { ascending: false });
+
+    if (transactionsError) throw transactionsError;
+
+    const transactions = (transactionsData || []).map(t => ({
+      type: t.type === "topup" ? "Top up" : t.type,
+      amount: Number(t.amount),
+      date: new Date(t.created_at).toLocaleString()
+    }));
+
     res.json({
       balance: Number(user.balance || 0),
-      orders
+      orders,
+      transactions
     });
 
   } catch (error) {
     console.log("Error /user:", error);
-    res.status(500).json({ error: "Error cargando usuario" });
+
+    res.status(500).json({
+      error: "Error cargando usuario"
+    });
   }
 });
 app.post("/topup", async (req, res) => {
