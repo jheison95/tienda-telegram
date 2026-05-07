@@ -86,7 +86,7 @@ app.post("/user", async (req, res) => {
 
     const orders = (ordersData || []).map(o => ({
       id: o.id,
-      product: o.product_id || "Producto digital",
+      product: o.product_name || o.product_id || "Producto digital",
       product_id: o.product_id,
       vendedor: o.vendedor,
       nivel: o.nivel,
@@ -131,17 +131,32 @@ app.post("/topup", async (req, res) => {
         .single();
 
       if (error) throw error;
+
       user = newUser;
     }
 
-    const newBalance = Number(user.balance || 0) + Number(amount || 0);
+    const newBalance =
+      Number(user.balance || 0) + Number(amount || 0);
 
     const { error: updateError } = await supabase
       .from("users")
-      .update({ balance: newBalance })
+      .update({
+        balance: newBalance
+      })
       .eq("id", telegram_id);
 
     if (updateError) throw updateError;
+
+    await supabase
+      .from("transactions")
+      .insert([
+        {
+          telegram_id,
+          type: "Top up",
+          amount: Number(amount),
+          description: "Recarga wallet"
+        }
+      ]);
 
     res.json({
       success: true,
@@ -150,13 +165,13 @@ app.post("/topup", async (req, res) => {
 
   } catch (error) {
     console.log("Error /topup:", error);
+
     res.status(500).json({
       success: false,
       message: "Error agregando saldo"
     });
   }
 });
-
 app.post("/buy-offer", async (req, res) => {
   const { telegram_id, offer } = req.body;
 
@@ -258,6 +273,7 @@ app.post("/buy-offer", async (req, res) => {
         {
           telegram_id,
           product_id: offer.producto_id,
+          product_name: offer.product_name || offer.name,
           vendedor: offer.vendedor,
           nivel: offer.nivel,
           quantity,
